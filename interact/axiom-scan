@@ -166,33 +166,13 @@ add_extra_args() {
     echo $new_command
 }
 
-
-
 split_file() {
     file="$1"
     divisor="$2"
     tmp="$3"
-
-    lines="$(wc -l "$file" | awk '{ print $1 }')"
-    lines_per_file=$(expr $lines / $divisor)
-
-    [[ $(expr $lines % $divisor) != 0 ]] && lines_per_file=$(expr $lines_per_file + 1)
-    cat "$file" | shuf > "$tmp/split/targets"
-
-    cd "$tmp/split" && split -l $lines_per_file targets && rm targets && cd "$start"
-    # Rename "xaa" etc  to 1 2 3 4 5
-    i=1
-    for f in $(find "$tmp/split/" -type f | tr '/' ' ' | awk '{ print $NF }')
-    do
-        instance="$(echo $instances | awk "{ print \$$i }")"
-        i=$((i+1))
-
-        mv "$tmp/split/$f" "$tmp/input/$instance"
-    done
-
-    total=$i
+    escapedtmp=$(echo $tmp | sed 's;/;\\/;g')
+    cat $file | gee -distribute $(cat $tmp/selected.conf  | sed -e 's/^/'$escapedtmp'\/input\//' | tr '\n' ' ') &>/dev/null 
 }
-
 
 merge_output() {
     if [[ "$anew" != "true" ]];  then
@@ -225,7 +205,7 @@ merge_output() {
         mkdir $tmp/merge
         
         if [[ "$command" =~ "_target_" ]]; then
-            cp -r $tmp/output/* $tmp/merge
+            find $tmp/output -type f -print0 | xargs -0 -I{} cp {} $tmp/merge
             rm -rf "$outfile"
             mv $tmp/merge "$outfile"
         else
@@ -408,14 +388,17 @@ do
             set=true
             pass+=($i)
         fi
+        if [[ "$arg" == "--debug" ]]; then
+            debug="true"
+            set=true
+            pass+=($i)
+        fi
         if  [[ "$set" != "true" ]]; then
             args="$args $arg"
         fi
 
     fi
 done
-
-#reset
 
 echo -e -n "${BWhite}"
 echo "ICAgICAgICAgICAgICBfCiAgX19fXyBfXyAgX18oXylfX18gIF9fX18gX19fICAgICAgICBfX19fX19fX19fX19fXyBfX19fXwogLyBfXyBgLyB8L18vIC8gX18gXC8gX18gYF9fIFxfX19fX18vIF9fXy8gX19fLyBfXyBgLyBfX
@@ -431,6 +414,7 @@ if [[ ! -f $input ]]; then
 fi
 
 if [[ "$debug" == "true" ]]; then
+    set -xv
     silent=""
 fi
 

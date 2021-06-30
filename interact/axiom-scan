@@ -600,3 +600,4 @@ echo "{\"module\":\"$module\",\"args\":\"$args\",\"targets\":\"$lines\",\"result
 #axiom-exec "lsof /home/op/scan/${uid}/  | cut -d ' ' -f 2 | xargs sudo kill" -q
 kill -9 $tailPID
 stty sane
+tput init

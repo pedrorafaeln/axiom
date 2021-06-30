@@ -125,6 +125,7 @@ clean_up() {
     kill -9 $tailPID
 #    axiom-exec "lsof /home/op/scan/${uid}/  | cut -d ' ' -f 2 | xargs sudo kill" -q
     stty sane
+    tput init
     exit $1
 }
 

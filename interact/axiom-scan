@@ -172,25 +172,8 @@ split_file() {
     file="$1"
     divisor="$2"
     tmp="$3"
-
-    lines="$(wc -l "$file" | awk '{ print $1 }')"
-    lines_per_file=$(expr $lines / $divisor)
-
-    [[ $(expr $lines % $divisor) != 0 ]] && lines_per_file=$(expr $lines_per_file + 1)
-    cat "$file" | shuf > "$tmp/split/targets"
-
-    cd "$tmp/split" && split -l $lines_per_file targets && rm targets && cd "$start"
-    # Rename "xaa" etc  to 1 2 3 4 5
-    i=1
-    for f in $(find "$tmp/split/" -type f | tr '/' ' ' | awk '{ print $NF }')
-    do
-        instance="$(echo $instances | awk "{ print \$$i }")"
-        i=$((i+1))
-
-        mv "$tmp/split/$f" "$tmp/input/$instance"
-    done
-
-    total=$i
+    escapedtmp=$(echo $tmp | sed 's;/;\\/;g')
+    cat $file | gee -distribute $(cat $tmp/selected.conf  | sed -e 's/^/'$escapedtmp'\/input\//' | tr '\n' ' ') &>/dev/null 
 }
 
 merge_output() {
